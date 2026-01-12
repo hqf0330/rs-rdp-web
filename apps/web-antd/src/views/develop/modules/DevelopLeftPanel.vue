@@ -3,11 +3,15 @@ import type { TreeProps } from 'ant-design-vue';
 
 import type { MainTabKey } from '../types';
 
+import { computed } from 'vue';
+
+import { IconifyIcon } from '@vben/icons';
+
 import { Button, Input, Tabs, Tag, Tooltip, Tree } from 'ant-design-vue';
 
 defineOptions({ name: 'DevelopLeftPanel' });
 
-defineProps<{
+const props = defineProps<{
   activeTab: MainTabKey;
   search: string;
   treeData: TreeProps['treeData'];
@@ -19,11 +23,19 @@ const emit = defineEmits<{
   (e: 'treeSelect', keys: (number | string)[]): void;
   (e: 'create'): void;
 }>();
+
+// 默认展开所有文件夹
+const defaultExpandedKeys = computed(() => {
+  if (!props.treeData) return [];
+  return props.treeData
+    .filter((node: any) => String(node.key).startsWith('folder:'))
+    .map((node: any) => node.key);
+});
 </script>
 
 <template>
   <div
-    class="develop-left-panel w-[320px] shrink-0 border-r border-border bg-background"
+    class="develop-left-panel h-full shrink-0 border-r border-border bg-background"
   >
     <div class="px-1 pt-0">
       <Tabs
@@ -37,28 +49,57 @@ const emit = defineEmits<{
       </Tabs>
     </div>
 
-    <div class="px-2 pb-2 pt-1">
-      <div class="flex items-center gap-2">
+    <div class="px-2 pb-1.5 pt-1">
+      <div class="flex items-center gap-1.5">
         <Input
+          class="flex-1"
           :value="search"
           allow-clear
           placeholder="搜索"
+          size="small"
           @update:value="(v) => emit('update:search', v)"
-        />
-        <Tooltip title="新建（mock）">
-          <Button size="small" type="primary" @click="emit('create')">+</Button>
+        >
+          <template #prefix>
+            <IconifyIcon class="text-muted-foreground" icon="lucide:search" />
+          </template>
+        </Input>
+        <Tooltip title="筛选">
+          <Button size="small" type="text">
+            <IconifyIcon icon="lucide:filter" />
+          </Button>
+        </Tooltip>
+        <Tooltip title="新建">
+          <Button size="small" type="primary" @click="emit('create')">
+            <IconifyIcon icon="lucide:plus" />
+          </Button>
         </Tooltip>
       </div>
     </div>
 
-    <div class="h-[calc(100%-70px)] overflow-auto px-2 pb-2">
+    <div class="h-[calc(100%-68px)] overflow-auto px-2 pb-2">
       <template v-if="activeTab !== 'data'">
         <Tree
           :tree-data="treeData"
+          :default-expanded-keys="defaultExpandedKeys"
           block-node
-          show-icon
           @select="(keys) => emit('treeSelect', keys as any)"
-        />
+        >
+          <template #title="{ key, title }">
+            <div class="flex items-center gap-1.5">
+              <IconifyIcon
+                v-if="String(key || '').startsWith('folder:')"
+                class="text-amber-500"
+                icon="lucide:folder"
+              />
+              <IconifyIcon
+                v-else
+                class="text-blue-500"
+                icon="lucide:file-code"
+              />
+              <span>{{ title }}</span>
+            </div>
+          </template>
+        </Tree>
       </template>
       <template v-else>
         <div class="p-2 text-sm">
@@ -99,5 +140,20 @@ const emit = defineEmits<{
   font-size: 12px;
   line-height: 26px;
   min-height: 28px;
+}
+
+/* 压缩树节点的高度和间距 */
+.develop-left-panel :deep(.ant-tree-treenode) {
+  padding: 2px 0;
+}
+.develop-left-panel :deep(.ant-tree-node-content-wrapper) {
+  min-height: 24px;
+  line-height: 24px;
+}
+.develop-left-panel :deep(.ant-tree-title) {
+  font-size: 13px;
+}
+.develop-left-panel :deep(.ant-tree-switcher) {
+  width: 20px;
 }
 </style>

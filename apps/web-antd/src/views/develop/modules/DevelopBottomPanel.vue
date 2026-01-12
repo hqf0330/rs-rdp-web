@@ -3,7 +3,9 @@ import type { TableColumnsType } from 'ant-design-vue';
 
 import type { BottomTabKey, RunRecord, RunStatus } from '../types';
 
-import { Badge, Button, Space, Table, Tabs, Tag } from 'ant-design-vue';
+import { IconifyIcon } from '@vben/icons';
+
+import { Badge, Table, Tabs, Tag } from 'ant-design-vue';
 
 defineOptions({ name: 'DevelopBottomPanel' });
 
@@ -26,23 +28,22 @@ const emit = defineEmits<{
 
 <template>
   <div class="border-t border-border bg-background">
-    <div class="flex items-center justify-between px-3 py-1">
-      <Space size="small">
-        <Button
-          size="small"
-          type="text"
-          @click="emit('update:collapsed', !collapsed)"
-        >
-          {{ collapsed ? '展开' : '收起' }}
-        </Button>
-        <span class="text-xs text-muted-foreground">运行面板</span>
-      </Space>
+    <!-- 收起时的轻量 header -->
+    <div
+      class="flex cursor-pointer items-center justify-between px-3 py-1.5 hover:bg-accent/50"
+      @click="emit('update:collapsed', !collapsed)"
+    >
+      <div class="flex items-center gap-2 text-sm text-muted-foreground">
+        <IconifyIcon
+          :icon="collapsed ? 'lucide:chevron-up' : 'lucide:chevron-down'"
+          class="text-base"
+        />
+        <span>运行面板</span>
+      </div>
 
-      <Space size="small">
-        <Badge :count="runs.length" :show-zero="false">
-          <span class="text-xs text-muted-foreground">运行历史</span>
-        </Badge>
-      </Space>
+      <Badge :count="runs.length" :show-zero="false" :offset="[6, 0]">
+        <span class="text-xs text-muted-foreground">运行历史</span>
+      </Badge>
     </div>
 
     <div v-show="!collapsed" class="h-[240px] border-t border-border">

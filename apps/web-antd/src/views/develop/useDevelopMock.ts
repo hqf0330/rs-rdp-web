@@ -15,9 +15,12 @@ import { message } from 'ant-design-vue';
 import { MOCK_SCRIPTS, mockResultFor, nowStr } from './mock';
 
 export function useDevelopMock() {
-  // ============= mock: workspace & engine =============
+  // ============= mock: workspace & datasource =============
   const workspace = ref('quick_start');
-  const engine = ref<'LAKEHOUSE_SQL'>('LAKEHOUSE_SQL');
+  // 数据源选择（JDBC 连接）
+  const profile = ref<'DEFAULT' | 'DEV' | 'PROD'>('DEFAULT');
+  // 引擎类型（当前固定为 JDBC，未来可扩展 Spark/Flink）
+  const engine = ref<'JDBC'>('JDBC');
   const schema = ref('public');
   const limit = ref(1000);
 
@@ -82,6 +85,18 @@ export function useDevelopMock() {
   function handleEditorTabEdit(targetKey: any, action: 'add' | 'remove') {
     if (action === 'remove') {
       closeScriptById(String(targetKey));
+    } else if (action === 'add') {
+      // 创建新脚本（mock）
+      const newId = `s${Date.now()}`;
+      const newScript: ScriptItem = {
+        id: newId,
+        name: `Untitled_${scripts.length + 1}`,
+        folder: 'Tpch_100g',
+        content: '-- 新建脚本\nSELECT 1;',
+      };
+      scripts.push(newScript);
+      openScriptById(newId);
+      message.success('已新建脚本（mock）');
     }
   }
 
@@ -104,6 +119,16 @@ export function useDevelopMock() {
     if (!s) return;
     dirtyMap[s.id] = false;
     message.success('已保存（mock）');
+  }
+
+  function handleSubmit() {
+    const s = activeScript.value;
+    if (!s) {
+      message.warning('未选择脚本（mock）');
+      return;
+    }
+    // 这里只做前端占位：后续接“发布/提交到调度”再细化状态机
+    message.success(`已提交：${s.name}（mock）`);
   }
 
   // ============= run simulation =============
@@ -202,6 +227,53 @@ export function useDevelopMock() {
     }, 900);
   }
 
+  // 运行单条语句（从 Monaco gutter 点击）
+  function handleRunStatement(statement: string, lineNumber: number) {
+    const s = activeScript.value;
+    if (!s) return;
+
+    bottomPanelCollapsed.value = false;
+    activeBottomTab.value = 'history';
+
+    const id = `r${Math.random().toString(16).slice(2, 8)}`;
+    const startAt = nowStr();
+    const record: RunRecord = {
+      id,
+      scriptId: s.id,
+      scriptName: `${s.name}:L${lineNumber}`,
+      status: 'RUNNING',
+      startAt,
+      log: `[${startAt}] 运行第 ${lineNumber} 行语句\n[${startAt}] SQL: ${statement.slice(0, 100)}${statement.length > 100 ? '...' : ''}\n`,
+    };
+    runs.value = [record, ...runs.value];
+    selectedRunId.value = id;
+
+    const started = Date.now();
+    setTimeout(() => {
+      const endAt = nowStr();
+      const durationMs = Date.now() - started;
+      const result = mockResultFor(s.name);
+
+      const idx = runs.value.findIndex((r) => r.id === id);
+      if (idx === -1) return;
+      const prev = runs.value[idx];
+      if (!prev) return;
+      const next: RunRecord = {
+        ...prev,
+        status: 'SUCCESS',
+        endAt,
+        durationMs,
+        rows: result.length,
+        resultPreview: result,
+        log: `${prev.log}[${endAt}] success\n`,
+      };
+      runs.value.splice(idx, 1, next);
+      selectedRunId.value = id;
+      activeBottomTab.value = 'result';
+      message.success(`第 ${lineNumber} 行语句运行成功（mock）`);
+    }, 600);
+  }
+
   function handleStop() {
     const r = selectedRun.value;
     if (!r) {
@@ -264,9 +336,11 @@ export function useDevelopMock() {
     handleSave,
 
     // toolbar controls
+    profile,
     engine,
     schema,
     limit,
+    handleSubmit,
 
     // bottom panel & run
     bottomPanelCollapsed,
@@ -277,6 +351,7 @@ export function useDevelopMock() {
     historyColumns,
     statusTagColor,
     handleRun,
+    handleRunStatement,
     handleStop,
     openInstance,
 
