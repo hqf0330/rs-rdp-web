@@ -357,5 +357,8 @@ export function useDevelopMock() {
 
     // drawer
     instanceDrawerOpen,
+
+    // config panel
+    configPanelOpen: ref(false),
   };
 }

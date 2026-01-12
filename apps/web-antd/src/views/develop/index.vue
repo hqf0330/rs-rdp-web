@@ -7,6 +7,7 @@ import DevelopBottomPanel from './modules/DevelopBottomPanel.vue';
 import DevelopEditorArea from './modules/DevelopEditorArea.vue';
 import DevelopInstanceDrawer from './modules/DevelopInstanceDrawer.vue';
 import DevelopLeftPanel from './modules/DevelopLeftPanel.vue';
+import ScriptConfigPanel from './modules/ScriptConfigPanel.vue';
 import { useDevelopMock } from './useDevelopMock';
 
 defineOptions({ name: 'Develop' });
@@ -78,6 +79,8 @@ const {
   instanceDrawerOpen,
 
   handleSubmit,
+
+  configPanelOpen,
 } = useDevelopMock();
 </script>
 
@@ -104,8 +107,8 @@ const {
             @mousedown="onResizerMouseDown"
           ></div>
 
-          <!-- right: 编辑区 + 底部面板（垂直布局） -->
-          <div class="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+          <!-- right: 编辑区 + 底部面板 + 配置面板 -->
+          <div class="relative flex h-full min-w-0 flex-1 flex-col overflow-hidden">
             <DevelopEditorArea
               :opened-scripts="openedScripts"
               :active-script-id="activeScriptId"
@@ -115,6 +118,7 @@ const {
               :limit="limit"
               :engine="engine"
               :profile="profile"
+              :config-panel-open="configPanelOpen"
               @update:active-script-id="(v) => (activeScriptId = v)"
               @edit-tab="handleEditorTabEdit"
               @update:schema="(v) => (schema = v)"
@@ -126,6 +130,7 @@ const {
               @stop="handleStop"
               @submit="handleSubmit"
               @update:content="setActiveScriptContent"
+              @open-config="configPanelOpen = true"
             />
 
             <DevelopBottomPanel
@@ -137,6 +142,14 @@ const {
               :history-columns="historyColumns"
               :status-tag-color="statusTagColor"
               @open-instance="openInstance"
+            />
+
+            <!-- 右侧配置面板 -->
+            <ScriptConfigPanel
+              :open="configPanelOpen"
+              :script="activeScript"
+              @update:open="(v) => (configPanelOpen = v)"
+              @save="configPanelOpen = false"
             />
           </div>
         </div>

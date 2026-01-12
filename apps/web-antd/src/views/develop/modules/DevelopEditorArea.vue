@@ -12,6 +12,7 @@ defineOptions({ name: 'DevelopEditorArea' });
 defineProps<{
   activeScript?: ScriptItem;
   activeScriptId: string;
+  configPanelOpen?: boolean;
   dirtyMap: Record<string, boolean>;
   engine: string;
   limit: number;
@@ -32,6 +33,7 @@ const emit = defineEmits<{
   (e: 'stop'): void;
   (e: 'submit'): void;
   (e: 'update:content', v: string): void;
+  (e: 'openConfig'): void;
 }>();
 </script>
 
@@ -82,9 +84,27 @@ const emit = defineEmits<{
     >
       <!-- left group -->
       <div class="flex items-center gap-2">
-        <Tag color="default">未提交</Tag>
-        <Tag color="default">{} 参数 0</Tag>
-        <Tag color="default">调度</Tag>
+        <Tag
+          class="cursor-pointer hover:border-primary"
+          color="default"
+          @click="emit('openConfig')"
+        >
+          未提交
+        </Tag>
+        <Tag
+          class="cursor-pointer hover:border-primary"
+          color="default"
+          @click="emit('openConfig')"
+        >
+          {} 参数 0
+        </Tag>
+        <Tag
+          class="cursor-pointer hover:border-primary"
+          color="default"
+          @click="emit('openConfig')"
+        >
+          调度
+        </Tag>
 
         <Divider type="vertical" class="mx-1" />
 
